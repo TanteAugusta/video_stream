@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from pymavlink import mavutil
+
 app = FastAPI()
 
 origins = ["*"]
@@ -20,7 +22,7 @@ app.add_middleware(
 app = FastAPI()
 
 
-def generate_frames():
+def video_frames():
     video_capture = cv2.VideoCapture(0)
     while True:
         _, frame = video_capture.read()
@@ -32,9 +34,28 @@ def generate_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
 
+def mavlink_frames():
+
+    device = "/dev/tty0"
+    baud = 57600
+
+    connection = mavutil.mavlink_connection(device=device, baud=baud)
+
+    while True:
+        message = connection.recv_match()
+        if message:
+            yield (message)
+
+
 @app.get('/video_feed')
 def video_feed():
-    return StreamingResponse(generate_frames(),
+    return StreamingResponse(video_frames(),
+                             media_type='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.get('/connection_data')
+def video_feed():
+    return StreamingResponse(mavlink_frames(),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
 

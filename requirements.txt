@@ -16,3 +16,5 @@ python-decouple==3.8
 python-dotenv==1.0.0
 starlette==0.27.0
 uvicorn==0.22.0
+pymavlink==2.4.39
+pyserial==3.5
